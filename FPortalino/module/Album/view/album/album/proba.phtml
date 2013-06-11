@@ -5,6 +5,14 @@ use Album;
 <strong>Controller:</strong>    Album &raquo;
 <strong>Action:</strong>        proba (proba.phtml)
 
+<?php
+$con = mysql_connect("finso-db.my.phpcloud.com", "finso", "finso2013");
+if (!$con) {
+    die("Error: " . mysql_error());
+}
+mysql_select_db("finso", $con);
+$result = mysql_query("SELECT * FROM album");
+?>
 <?php 
 $title = 'My albums proba';
 $this->headTitle($title);
@@ -63,8 +71,16 @@ $this->headTitle($title);
 	<tbody>
 		<tr>
 			<td colspan="5" class="dataTables_empty">Loading data from server</td>
-			
-			
+			 <?php
+                    while ($row = mysql_fetch_array($result)) { //$result
+             ?> 
+                        <tr>
+                            <td><?=$row['id']?></td>
+                            <td><?=$row['artist']?></td>
+                            <td><?=$row['title']?></td>                                                       
+                        </tr>
+             <?php }    // Od While
+             ?>			
 			
 		</tr>
 	</tbody>
