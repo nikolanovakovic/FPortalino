@@ -1,0 +1,496 @@
+<?php
+/*$con = mysql_connect("localhost", "root", "");
+if (!$con) {
+    die("Error: " . mysql_error());
+}
+mysql_select_db("sample", $con);
+$result = mysql_query("SELECT * FROM countries");*/
+?>
+
+<?php
+	/* * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * *
+	 * Easy set variables
+	 */
+	
+	/* Array of database columns which should be read and sent back to DataTables. Use a space where
+	 * you want to insert a non-database field (for example a counter or static image)
+	 */
+	$aColumns = array( 'IDInspectionTable', 'proba_text', 'proba_broj', 'proba_email' );
+	
+	/* Indexed column (used for fast and accurate table cardinality) */
+	$sIndexColumn = "IDInspectionTable";
+	
+	/* DB table to use */
+	$sTable = "inspection_table"; //ajax inspection_table
+	
+	/* Database connection information */
+	/*$gaSql['user']       = "";
+	$gaSql['password']   = "";
+	$gaSql['db']         = "";
+	$gaSql['server']     = "localhost"; */
+	
+	$gaSql['user']       = "finso";
+	$gaSql['password']   = "finso2013";
+	$gaSql['db']         = "finso";
+	$gaSql['server']     = "finso-db.my.phpcloud.com"; // localhost
+	
+	/* REMOVE THIS LINE (it just includes my SQL connection user/pass) */
+	//include( $_SERVER['DOCUMENT_ROOT']."/datatables/mysql.php" );
+	
+	
+	/* * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * *
+	 * If you just want to use the basic configuration for DataTables with PHP server-side, there is
+	 * no need to edit below this line
+	 */
+	
+	/* 
+	 * Local functions
+	 */
+	function fatal_error ( $sErrorMessage = '' )
+	{
+		header( $_SERVER['SERVER_PROTOCOL'] .' 500 Internal Server Error' );
+		die( $sErrorMessage );
+	}
+
+	
+	/* 
+	 * MySQL connection
+	 */
+	if ( ! $gaSql['link'] = mysql_pconnect( $gaSql['server'], $gaSql['user'], $gaSql['password']  ) )
+	{
+		fatal_error( 'Could not open connection to server' );
+	}
+
+	if ( ! mysql_select_db( $gaSql['db'], $gaSql['link'] ) )
+	{
+		fatal_error( 'Could not select database ' );
+	}
+	
+	
+	
+	
+	/*
+	 * Paging
+	*/
+	$sLimit = "";
+	if ( isset( $_GET['iDisplayStart'] ) && $_GET['iDisplayLength'] != '-1' )
+	{
+		$sLimit = "LIMIT ".intval( $_GET['iDisplayStart'] ).", ".
+				intval( $_GET['iDisplayLength'] );
+	}
+	
+	/*
+	 * Ordering
+	 */
+	$sOrder = "";
+	if ( isset( $_GET['iSortCol_0'] ) )
+	{
+		$sOrder = "ORDER BY  ";
+		for ( $i=0 ; $i<intval( $_GET['iSortingCols'] ) ; $i++ )
+		{
+			if ( $_GET[ 'bSortable_'.intval($_GET['iSortCol_'.$i]) ] == "true" )
+			{
+				$sOrder .= "`".$aColumns[ intval( $_GET['iSortCol_'.$i] ) ]."` ".
+					($_GET['sSortDir_'.$i]==='asc' ? 'asc' : 'desc') .", ";
+			}
+		}
+		
+		$sOrder = substr_replace( $sOrder, "", -2 );
+		if ( $sOrder == "ORDER BY" )
+		{
+			$sOrder = "";
+		}
+	}
+	
+	
+	/* 
+	 * Filtering
+	 * NOTE this does not match the built-in DataTables filtering which does it
+	 * word by word on any field. It's possible to do here, but concerned about efficiency
+	 * on very large tables, and MySQL's regex functionality is very limited
+	 */
+	$sWhere = "";
+	if ( isset($_GET['sSearch']) && $_GET['sSearch'] != "" )
+	{
+		$sWhere = "WHERE (";
+		for ( $i=0 ; $i<count($aColumns) ; $i++ )
+		{
+			if ( isset($_GET['bSearchable_'.$i]) && $_GET['bSearchable_'.$i] == "true" )
+			{
+				$sWhere .= "`".$aColumns[$i]."` LIKE '%".mysql_real_escape_string( $_GET['sSearch'] )."%' OR ";
+			}
+		}
+		$sWhere = substr_replace( $sWhere, "", -3 );
+		$sWhere .= ')';
+	}
+	
+	/* Individual column filtering */
+	for ( $i=0 ; $i<count($aColumns) ; $i++ )
+	{
+		if ( isset($_GET['bSearchable_'.$i]) && $_GET['bSearchable_'.$i] == "true" && $_GET['sSearch_'.$i] != '' )
+		{
+			if ( $sWhere == "" )
+			{
+				$sWhere = "WHERE ";
+			}
+			else
+			{
+				$sWhere .= " AND ";
+			}
+			$sWhere .= "`".$aColumns[$i]."` LIKE '%".mysql_real_escape_string($_GET['sSearch_'.$i])."%' ";
+		}
+	}
+	
+	
+	/*
+	 * SQL queries
+	 * Get data to display
+	 */
+	$sQuery = "
+		SELECT SQL_CALC_FOUND_ROWS `".str_replace(" , ", " ", implode("`, `", $aColumns))."`
+		FROM   $sTable
+		$sWhere
+		$sOrder
+		$sLimit
+		";
+	$rResult = mysql_query( $sQuery, $gaSql['link'] ) or fatal_error( 'MySQL Error: ' . mysql_errno() );
+	
+	//***  Dodala  iz drugog primera 
+	$result = mysql_query("SELECT * FROM inspection_table");
+	
+	/* Data set length after filtering */
+	$sQuery = "
+		SELECT FOUND_ROWS()
+	";
+	$rResultFilterTotal = mysql_query( $sQuery, $gaSql['link'] ) or fatal_error( 'MySQL Error: ' . mysql_errno() );
+	$aResultFilterTotal = mysql_fetch_array($rResultFilterTotal);
+	$iFilteredTotal = $aResultFilterTotal[0];
+	
+	/* Total data set length */
+	$sQuery = "
+		SELECT COUNT(`".$sIndexColumn."`)
+		FROM   $sTable
+	";
+	$rResultTotal = mysql_query( $sQuery, $gaSql['link'] ) or fatal_error( 'MySQL Error: ' . mysql_errno() );
+	$aResultTotal = mysql_fetch_array($rResultTotal);
+	$iTotal = $aResultTotal[0];
+	
+	
+	/*
+	 * Output
+	 */
+	$output = array(
+		"sEcho" => intval($_GET['sEcho']),
+		"iTotalRecords" => $iTotal,
+		"iTotalDisplayRecords" => $iFilteredTotal,
+		"aaData" => array()
+	);
+	
+	while ( $aRow = mysql_fetch_array($rResult) )
+	{
+		$row = array();
+		for ( $i=0 ; $i<count($aColumns) ; $i++ )
+		{
+			if ( $aColumns[$i] == "version" )
+			{
+				//* Special output formatting for 'version' column 
+				$row[] = ($aRow[ $aColumns[$i] ]=="0") ? '-' : $aRow[ $aColumns[$i] ];
+			}
+			else if ( $aColumns[$i] != ' ' )
+			{
+				//* General output 
+				$row[] = $aRow[ $aColumns[$i] ];
+			}
+		}
+		$output['aaData'][] = $row;
+
+	    /*$row = array();
+	    
+	    /* Add the  details image at the start of the display array 
+	    $row[] = '<img src="../examples_support/details_open.png">';
+	    
+	    for ( $i=0 ; $i<count($aColumns) ; $i++ )
+	    {
+	    	if ( $aColumns[$i] == "version" )
+	    	{
+	    		/* Special output formatting for 'version' column 
+	    		$row[] = ($aRow[ $aColumns[$i] ]=="0") ? '-' : $aRow[ $aColumns[$i] ];
+	    	}
+	    	else if ( $aColumns[$i] != ' ' )
+	    	{
+	    		/* General output 
+	    		$row[] = $aRow[ $aColumns[$i] ];
+	    	}
+	    }
+	    $row['extra'] = 'hrmll';
+	    $output['aaData'][] = $row;*/
+	    
+	    
+	}
+	
+
+	//echo json_encode( $output ); premesteno u server response !!!!
+	
+		
+?>
+
+
+
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01//EN" "http://www.w3.org/TR/html4/strict.dtd">
+<html>
+	<head>
+		<meta http-equiv="content-type" content="text/html; charset=utf-8" />
+		
+		<link rel="shortcut icon" type="image/ico" href="http://www.datatables.net/media/images/favicon.ico" />
+
+		
+		<title>DataTables example</title>
+		
+		<script type="text/javascript" charset="utf-8" src="media/js/jquery.js"></script>
+        <script type="text/javascript" charset="utf-8" src="media/js/jquery.dataTables.js"></script>
+		<script type="text/javascript" language="javascript" src="../examples_support/jquery-ui-tabs.js"></script>
+		<style type="text/css" title="currentStyle">
+			@import "media/css/demo_page.css";
+			@import "media/css/demo_table.css";
+			@import "media/css/demo_table_jui.css";
+            @import "media/themes/smoothness/jquery-ui-1.8.4.custom.css";            
+			@import "../examples_support/themes/smoothness/jquery-ui-1.8.4.custom.css";		
+			        
+		</style>
+		<style>
+            *{
+                font-family: arial;
+            }
+        </style>
+		
+		<script type="text/javascript" charset="utf-8">
+		/*	$(document).ready(function() {
+				$('#inspection_table').dataTable( { //#example dataTables_empty   ../../
+					"bProcessing": true,
+					"bServerSide": true,
+					"sAjaxSource": "scripts/server_processing.php"
+				} );				
+			} );*/
+
+		 $(document).ready(function() {
+		     
+	                $('#inspection_table').dataTable({
+	                    "sPaginationType":"full_numbers",
+	                    "aaSorting":[[2, "desc"]],
+	                    "bJQueryUI":true
+	                    /*"sScrollY": "200px",
+	                    "bScrollCollapse": true
+	                    "aoColumnDefs": [
+		             			            { "sWidth": "10%", "aTargets": [ -1 ] }]*/
+	                });
+	          
+				 
+			
+			 
+        } );
+
+
+
+		/*	$(document).ready(function() {
+			    $("#tabs").tabs( {
+			        "show": function(event, ui) {
+			            var table = $.fn.dataTable.fnTables(true);
+			            if ( table.length > 0 ) {
+			                $(table).dataTable().fnAdjustColumnSizing();
+			            }
+			        }
+			    } );
+			     
+			    $('table.display').dataTable( {
+			        "sScrollY": "200px",
+			        "bScrollCollapse": true,
+			        "bPaginate": false,
+			        "bJQueryUI": true,
+			        "aoColumnDefs": [
+			            { "sWidth": "10%", "aTargets": [ -1 ] }
+			        ]
+			    } );
+			} );*/
+	        
+			
+	/*	 $(document).ready( function() {
+			  $('#example').dataTable( {
+			    "bProcessing": true,
+			    "bServerSide": true,
+			    "sAjaxSource": "xhr.php",
+			    "fnServerData": function ( sSource, aoData, fnCallback, oSettings ) {
+			      oSettings.jqXHR = $.ajax( {
+			        "dataType": 'json',
+			        "type": "POST",
+			        "url": sSource,
+			        "data": aoData,
+			        "success": fnCallback
+			      } );
+			    }
+			  } );
+			} );	*/
+			
+		</script>
+	</head>
+	<body id="dt_example"> 
+		<div id="container">
+			<div class="full_width big">
+				DataTables server-side processing example
+			</div>
+			
+			<h1>Preamble</h1>
+			<p>There are many ways to get your data into DataTables, and if you are working with seriously large databases, you might want to consider using the server-side options that DataTables provides. Basically all of the paging, filtering, sorting etc that DataTables does can be handed off to a server (or any other data source - Google Gears or Adobe Air for example!) and DataTables is just an events and display module.</p>
+			<p>The example here shows a very simple display of the CSS data (used in all my other examples), but in this instance coming from the server on each draw. Filtering, multi-column sorting etc all work as you would expect.</p>
+			
+			<h1>Live example</h1>
+			<div id="dynamic">
+<table cellpadding="0" cellspacing="0" border="0" class="display" id="inspection_table">
+	<thead>
+		<tr>
+			<th width="20%">IDInspectionTable</th>
+			<th width="25%">proba_text</th>
+			<th width="25%">proba_broj</th>
+			<th width="15%">proba_email</th>
+			
+		</tr>
+	</thead>
+	<tbody>
+		<tr>		
+			<td colspan="5" class="display"></td>			
+            <?php
+                    while ($row = mysql_fetch_array($result)) { //$result
+             ?>                        
+                        <tr>
+                            <td><?=$row['IDInspectionTable']?></td>
+                            <td><?=$row['proba_text']?></td>
+                            <td><?=$row['proba_broj']?></td>
+                            <td><?=$row['proba_email']?></td>                           
+                        </tr>
+             <?php }    // Od While
+             ?>
+		</tr>
+	</tbody>
+	
+	<tfoot>
+		<tr>
+			<th>IDInspectionTable</th>
+			<th>proba_text</th>
+			<th>proba_broj</th>			
+			<th>proba_email</th>
+		</tr>
+	</tfoot>
+</table>
+			</div>
+			</div>
+			<div class="spacer"></div>
+			
+			
+			<h1>Initialisation code</h1>
+        	<pre class="brush: js;">		
+			 $(document).ready(function() {
+				 var oTable = $('inspection_table').dataTable( { //#example
+		                          "bProcessing": true,
+		                          "bServerSide": true,
+		                          "sAjaxSource": "scripts/server_processing.php",
+		                          "aoColumns": [
+		                        	                { "mData": "IDInspectionTable" },
+		                        	                { "mData": "proba_text" },
+		                        	                { "mData": "proba_broj" },
+		                        	                { "mData": "proba_email" }
+		                        	            ]    		          
+	                          } );
+				 new AutoFill( oTable );
+            } );
+
+
+
+			/* $(document).ready( function () {
+					var oTable = $('#example').dataTable();
+					new AutoFill( oTable );	     */       
+	        </pre>			
+		<style type="text/css">
+			@import "examples/examples_support/syntax/css/shCore.css";
+		</style>
+		
+			<script type="text/javascript" language="javascript" src="examples/examples_support/syntax/js/shCore.js"></script>
+			
+			<h1>Server response</h1>
+			<p>The code below shows the latest JSON data that has been returned from the server in response to the Ajax request made by DataTables. This will update as further requests are made.</p>
+			<script id="latest_xhr" class="brush: js;"></script>
+			<?php echo json_encode( $output ); ?>
+			<h1>Server side (PHP) code</h1>  
+			
+			
+
+       <script type="text/javascript" charset="utf-8">
+
+		    $(document).ready(function() {
+				$('#example').dataTable( {
+					"bProcessing": true,
+					"bServerSide": true,
+					"sAjaxSource": "Inspect/src/Inspect/Model/server_processing.php"   //
+				} );
+			} );
+
+
+			/*$(document).ready(function() {
+			    $("#tabs").tabs( {
+			        "show": function(event, ui) {
+			            var table = $.fn.dataTable.fnTables(true);
+			            if ( table.length > 0 ) {
+			                $(table).dataTable().fnAdjustColumnSizing();
+			            }
+			        }
+			    } );
+			     
+			    $('table.display').dataTable( {
+			        "sScrollY": "200px",
+			        "bScrollCollapse": true,
+			        "bPaginate": false,
+			        "bJQueryUI": true,
+			        "aoColumnDefs": [
+			            { "sWidth": "10%", "aTargets": [ -1 ] }
+			        ]
+			    } );
+			} );*/
+			
+
+			
+		</script>
+
+
+
+          <div id="dynamic">
+<table cellpadding="0" cellspacing="0" border="0" class="display" id="example">
+	<thead>
+		<tr>
+			<th width="20%">IDInspectionTable</th>
+			<th width="25%">proba_text</th>
+			<th width="25%">proba_broj</th>
+			<th width="15%">proba_email</th>
+			
+		</tr>
+	</thead>
+	<tbody>	
+		<tr>
+			<td colspan="4" class="dataTables_empty">Loading data from server</td>
+			
+		</tr>	
+	</tbody>	
+	<tfoot>
+		<tr>
+			<th>IDInspectionTable</th>
+			<th>proba_text</th>
+			<th>proba_broj</th>			
+			<th>proba_email</th>
+		</tr>
+	</tfoot>
+</table>
+            </div>
+			<div class="spacer"></div>
+
+			
+			
+
+	</body>
+</html>

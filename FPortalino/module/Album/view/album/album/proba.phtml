@@ -1,0 +1,99 @@
+use Album\Model\AlbumTable;
+use AlbumTable;
+use Album;
+<strong>Module:</strong>        Album &raquo;
+<strong>Controller:</strong>    Album &raquo;
+<strong>Action:</strong>        proba (proba.phtml)
+
+<?php 
+$title = 'My albums proba';
+$this->headTitle($title);
+?>
+
+
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01//EN" "http://www.w3.org/TR/html4/strict.dtd">
+<html>
+	<head>
+	    <h1><?php echo $this->escapeHtml($title); ?></h1>
+	
+		<meta http-equiv="content-type" content="text/html; charset=utf-8" />
+		<link rel="shortcut icon" type="image/ico" href="http://www.datatables.net/media/images/favicon.ico" />
+		
+		<title>DataTables example</title>
+		<style type="text/css" title="currentStyle">
+			@import "../media/css/demo_page.css";  
+			@import "../media/css/demo_table.css";
+		</style>
+		<script type="text/javascript" language="javascript" src="../media/js/jquery.js"></script>
+		<script type="text/javascript" language="javascript" src="../media/js/jquery.dataTables.js"></script>
+		<script type="text/javascript" charset="utf-8">
+			$(document).ready(function() {
+				$('#example').dataTable( {
+					"bProcessing": true,
+					"bServerSide": true,
+					"sAjaxSource": "AlbumController.php"
+				} );
+			} );
+		</script>
+		
+        <style type="text/css">
+			@import "../examples_support/syntax/css/shCore.css";
+		</style>		
+	</head>
+	<body id="dt_example">
+		<div id="container">
+			<div class="full_width big">
+				DataTables server-side processing example
+			</div>
+			
+			<h1>Preamble</h1>
+			<p>There are many ways to get your data into DataTables, and if you are working with seriously large databases, you might want to consider using the server-side options that DataTables provides. Basically all of the paging, filtering, sorting etc that DataTables does can be handed off to a server (or any other data source - Google Gears or Adobe Air for example!) and DataTables is just an events and display module.</p>
+			<p>The example here shows a very simple display of the CSS data (used in all my other examples), but in this instance coming from the server on each draw. Filtering, multi-column sorting etc all work as you would expect.</p>
+			
+			<h1>Live example</h1>
+			<div id="dynamic">
+<table cellpadding="0" cellspacing="0" border="0" class="display" id="example">
+	<thead>
+		<tr>
+			<th width="20%">id</th>
+			<th width="25%">artist</th>
+			<th width="25%">title</th>
+		</tr>
+	</thead>
+	<tbody>
+		<tr>
+			<td colspan="5" class="dataTables_empty">Loading data from server</td>
+			
+			
+			
+		</tr>
+	</tbody>
+	<tfoot>
+		<tr>
+			<th>id</th>
+			<th>artist</th>
+			<th>title)</th>
+		</tr>
+	</tfoot>
+</table>
+			</div>
+			<div class="spacer"></div>
+			
+			
+			<h1>Initialisation code</h1>
+			<pre class="brush: js;">$(document).ready(function() {
+	$('#example').dataTable( {
+		"bProcessing": true,
+		"bServerSide": true,
+		"sAjaxSource": "scripts/server_processing.php"
+	} );
+} );</pre>
+		
+			<script type="text/javascript" language="javascript" src="../examples_support/syntax/js/shCore.js"></script>
+			
+			<h1>Server response</h1>
+			<p>The code below shows the latest JSON data that has been returned from the server in response to the Ajax request made by DataTables. This will update as further requests are made.</p>
+			<script id="latest_xhr" class="brush: js;"  > </script>
+			<pre id="latest_xhr" class="brush: js;"></pre>
+	</div>
+	

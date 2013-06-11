@@ -1,0 +1,181 @@
+<strong>Module:</strong>        Inspect &raquo;
+<strong>Controller:</strong>    Inspect &raquo;
+<strong>Action:</strong>        foo
+<?php
+$con = mysql_connect("finso-db.my.phpcloud.com", "finso", "finso2013");
+if (!$con) {
+    die("Error: " . mysql_error());
+}
+mysql_select_db("finso", $con);
+$result = mysql_query("SELECT * FROM inspection_table");
+?>
+
+<?php 
+$title = 'My ins foo';
+$this->headTitle($title);
+?>
+<h1><?php echo $this->escapeHtml($title); ?></h1>
+
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01//EN" "http://www.w3.org/TR/html4/strict.dtd">
+<html>
+	<head>
+		<meta http-equiv="content-type" content="text/html; charset=utf-8" />
+		
+		<link rel="shortcut icon" type="image/ico" href="http://www.datatables.net/media/images/favicon.ico" />
+
+		
+		<title>DataTables example</title>
+		
+		<script type="text/javascript" charset="utf-8" src="media/js/jquery.js"></script>
+        <script type="text/javascript" charset="utf-8" src="media/js/jquery.dataTables.js"></script>
+		<script type="text/javascript" language="javascript" src="examples/examples_support/jquery-ui-tabs.js"></script>
+		<style type="text/css" title="currentStyle">
+			@import "media/css/demo_page.css";
+			@import "media/css/demo_table.css";
+			@import "media/css/demo_table_jui.css";
+            @import "media/themes/smoothness/jquery-ui-1.8.4.custom.css";            
+			@import "examples/examples_support/themes/smoothness/jquery-ui-1.8.4.custom.css";
+			
+			.ui-tabs .ui-tabs-panel { padding: 10px }            
+		</style>
+		<style>
+            *{
+                font-family: arial;
+            }
+        </style>
+		
+		<script type="text/javascript" charset="utf-8">
+		/*	$(document).ready(function() {
+				$('#inspection_table').dataTable( { //#example dataTables_empty   ../../
+					"bProcessing": true,
+					"bServerSide": true,
+					"sAjaxSource": "scripts/server_processing.php"
+				} );				
+			} );*/
+
+		 $(document).ready(function() {
+		     
+	                $('#inspection_table').dataTable({
+	                	"bProcessing": true,
+						"bServerSide": true,
+	                    "sPaginationType":"full_numbers",
+	                    "aaSorting":[[2, "desc"]],
+	                    "bJQueryUI":true
+	                    /*"sScrollY": "200px",
+	                    "bScrollCollapse": true
+	                    "aoColumnDefs": [
+		             			            { "sWidth": "10%", "aTargets": [ -1 ] }]*/
+	                });
+	          
+				 
+			
+			 
+        } );
+
+
+
+		/*	$(document).ready(function() {
+			    $("#tabs").tabs( {
+			        "show": function(event, ui) {
+			            var table = $.fn.dataTable.fnTables(true);
+			            if ( table.length > 0 ) {
+			                $(table).dataTable().fnAdjustColumnSizing();
+			            }
+			        }
+			    } );
+			     
+			    $('table.display').dataTable( {
+			        "sScrollY": "200px",
+			        "bScrollCollapse": true,
+			        "bPaginate": false,
+			        "bJQueryUI": true,
+			        "aoColumnDefs": [
+			            { "sWidth": "10%", "aTargets": [ -1 ] }
+			        ]
+			    } );
+			} );*/
+	        
+			
+	/*	 $(document).ready( function() {
+			  $('#example').dataTable( {
+			    "bProcessing": true,
+			    "bServerSide": true,
+			    "sAjaxSource": "xhr.php",
+			    "fnServerData": function ( sSource, aoData, fnCallback, oSettings ) {
+			      oSettings.jqXHR = $.ajax( {
+			        "dataType": 'json',
+			        "type": "POST",
+			        "url": sSource,
+			        "data": aoData,
+			        "success": fnCallback
+			      } );
+			    }
+			  } );
+			} );	*/
+			
+		</script>
+	</head>
+	
+	
+	<body id="dt_example"> 
+		<div id="container">
+			
+			<div class="full_width big">
+				DataTables server-side processing example
+			</div>
+			
+			<h1>Preamble</h1>
+			
+			<div id="dynamic">
+<table cellpadding="0" cellspacing="0" border="0" class="display" id="inspection_table">
+	<thead>
+		<tr>
+			<th width="20%">IDInspectionTable</th>
+			<th width="25%">proba_text</th>
+			<th width="25%">proba_broj</th>
+			<th width="15%">proba_email</th>
+			
+		</tr>
+	</thead>
+	<tbody>
+		<tr>
+			<td colspan="5" class="display"></td>
+			
+            <?php
+                    while ($row = mysql_fetch_array($result)) { //$result
+                        ?>
+                        
+                        <tr>
+                            <td><?=$row['IDInspectionTable']?></td>
+                            <td><?=$row['proba_text']?></td>
+                            <td><?=$row['proba_broj']?></td>
+                            <td><?=$row['proba_email']?></td>                           
+                        </tr>
+                        
+                        <?php
+                    }
+             ?>
+			
+			
+		</tr>
+	</tbody>
+	
+	<tfoot>
+		<tr>
+			<th>IDInspectionTable</th>
+			<th>proba_text</th>
+			<th>proba_broj</th>			
+			<th>proba_email</th>
+		</tr>
+	</tfoot>
+</table>
+			</div>
+			
+			</div>
+			</body>
+
+			
+ 
+			
+			<div class="spacer"></div>
+		
