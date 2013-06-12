@@ -11,7 +11,10 @@ namespace Album;
 
 use Zend\ModuleManager\Feature\AutoloaderProviderInterface;
 use Zend\Mvc\ModuleRouteListener;
-use ZfTable\Example\Model\AlbumTable;
+use Album\Model\AlbumTable;
+//use ZfTable\Example\Model\AlbumTable;
+//use  SynergyDataGrid\Grid\JqGrid ;
+//use  SynergyDataGrid\Grid\JqGridFactory ; 
 
 class Module implements AutoloaderProviderInterface
 {

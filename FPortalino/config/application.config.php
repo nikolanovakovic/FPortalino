@@ -1,10 +1,12 @@
 <?php
+use DoctrineModule;
+use DoctrineORMModule;
 return array(
     'modules' => array(
         'Application',        
         'ZfcBase',
         'ZfcUser',
-        'ZfTable','Inspect','Album'
+        'ZfTable','Inspect','Album','DoctrineModule','DoctrineORMModule','synergydatagrid'
     ),
     'module_listener_options' => array(
         'config_glob_paths'    => array(
